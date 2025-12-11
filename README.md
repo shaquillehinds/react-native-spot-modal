@@ -5,6 +5,8 @@ A simple, intelligent location-based modal for React Native that positions itsel
 [![npm version](https://img.shields.io/npm/v/@shaquillehinds/react-native-spot-modal.svg)](https://www.npmjs.com/package/@shaquillehinds/react-native-spot-modal)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+<img src="https://raw.githubusercontent.com/shaquillehinds/react-native-spot-modal/master/assets/spotmodal.gif" alt="example" height="500"/>
+
 ## Features
 
 - **🎯 Smart Positioning** - Automatically positions modal near tap location while staying within screen bounds
