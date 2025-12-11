@@ -57,11 +57,11 @@
     "ios",
     "android",
     "modal",
-    "dropdown",
-    "drop down",
-    "dropdown-selector",
-    "dropdown-menu",
-    "dropdown-modal"
+    "popup",
+    "spot-modal",
+    "spot-popup",
+    "spot-menu",
+    "spot-modal"
   ],
   "repository": {
     "type": "git",
