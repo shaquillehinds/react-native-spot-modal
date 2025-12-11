@@ -1,6 +1,6 @@
 import type { ComponentMounterProps } from '@shaquillehinds/react-native-essentials';
 
-export type SpotModalProps = {
+export type _SpotModalProps = {
   pageX: number;
   pageY: number;
   children: React.ReactNode;
@@ -10,7 +10,7 @@ export type SpotModalProps = {
   disablePortal?: boolean;
   disableNativeModal?: boolean;
 };
-export type SmoothSpotModalProps = SpotModalProps &
+export type SpotModalProps = _SpotModalProps &
   Omit<
     ComponentMounterProps,
     'showComponent' | 'setShowComponent' | 'component'

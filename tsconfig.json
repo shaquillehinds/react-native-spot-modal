@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "smooth-modal": ["./src/index"]
+      "spot-modal": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

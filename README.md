@@ -234,8 +234,7 @@ This package exports the following components and utilities:
 ### Main Component
 
 - **`SpotModal`** - The primary modal component (default export)
-- **`SmoothSpotModalProps`** - TypeScript type for modal props
-- **`SpotModalProps`** - TypeScript type for core modal props
+- **`SpotModalProps`** - TypeScript type for modal props
 
 ### Portal System Utilities
 
@@ -818,7 +817,7 @@ function GestureExample() {
 The package is fully typed. Here are the main type definitions:
 
 ```typescript
-type SpotModalProps = {
+type _SpotModalProps = {
   pageX: number;
   pageY: number;
   children: React.ReactNode;
@@ -829,7 +828,7 @@ type SpotModalProps = {
   disableNativeModal?: boolean;
 };
 
-type SmoothSpotModalProps = SpotModalProps & {
+type SpotModalProps = _SpotModalProps & {
   unMountDelayInMilliSeconds?: number;
   mountDelayInMilliSeconds?: number;
   mountDefault?: boolean;

@@ -8,7 +8,7 @@ import {
   ModalForegroundWrapper,
 } from '@shaquillehinds/react-native-essentials';
 import { SpotModalController } from './SpotModal.controller';
-import type { SmoothSpotModalProps, SpotModalProps } from './SpotModal.types';
+import type { SpotModalProps, _SpotModalProps } from './SpotModal.types';
 
 export function SpotModal({
   unMountDelayInMilliSeconds,
@@ -17,7 +17,7 @@ export function SpotModal({
   mountDefault,
   mountDelayInMilliSeconds,
   ...props
-}: SmoothSpotModalProps) {
+}: SpotModalProps) {
   const portal = usePortalComponent({
     Component: (
       <ComponentMounter
@@ -52,7 +52,7 @@ export function SpotModal({
   }
 }
 
-function Modal(props: SpotModalProps) {
+function Modal(props: _SpotModalProps) {
   const controller = SpotModalController(props);
   return (
     <ModalWrapper useNativeModal={!props.disableNativeModal}>
