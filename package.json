@@ -1,6 +1,6 @@
 {
   "name": "@shaquillehinds/react-native-spot-modal",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A simple location/spot modal for react native that just works.",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
