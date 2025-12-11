@@ -31,7 +31,7 @@ export function SpotModal({
         component={<Modal {...props} disableNativeModal />}
       />
     ),
-    name: 'smooth-bottom-modal',
+    name: 'spot-modal',
     disable: props.disablePortal,
   });
   if (portal && !props.disablePortal) {
