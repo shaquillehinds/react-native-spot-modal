@@ -1,6 +1,6 @@
 # @shaquillehinds/react-native-spot-modal
 
-A simple, intelligent location-based modal for React Native that positions itself relative to a tap/press location on the screen. Perfect for context menus, dropdowns, tooltips, and any UI element that needs to appear near where the user interacted.
+A simple, intelligent position-based modal for React Native that renders content at specific screen coordinates. Perfect for context menus, dropdowns, tooltips, and any UI element that needs to appear at a designated spot on the screen.
 
 [![npm version](https://img.shields.io/npm/v/@shaquillehinds/react-native-spot-modal.svg)](https://www.npmjs.com/package/@shaquillehinds/react-native-spot-modal)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,7 +9,8 @@ A simple, intelligent location-based modal for React Native that positions itsel
 
 ## Features
 
-- **🎯 Smart Positioning** - Automatically positions modal near tap location while staying within screen bounds
+- **🎯 Coordinate-Based Positioning** - Render modals at any X/Y coordinates on the screen
+- **🧠 Smart Boundary Detection** - Automatically adjusts position to stay within screen bounds
 - **📱 Orientation Aware** - Handles device rotation and recalculates position accordingly
 - **🎨 Fully Customizable** - Control appearance, animations, and behavior
 - **⚡ Smooth Animations** - Built with react-native-reanimated for 60fps animations
@@ -236,7 +237,8 @@ This package exports the following components and utilities:
 ### Main Component
 
 - **`SpotModal`** - The primary modal component (default export)
-- **`SpotModalProps`** - TypeScript type for modal props
+- **`SmoothSpotModalProps`** - TypeScript type for modal props
+- **`SpotModalProps`** - TypeScript type for core modal props
 
 ### Portal System Utilities
 
@@ -268,21 +270,21 @@ import {
 
 ### SpotModal Props
 
-| Prop                         | Type                                            | Required | Default     | Description                                               |
-| ---------------------------- | ----------------------------------------------- | -------- | ----------- | --------------------------------------------------------- |
-| `showModal`                  | `boolean`                                       | ✅       | -           | Controls modal visibility                                 |
-| `setShowModal`               | `React.Dispatch<React.SetStateAction<boolean>>` | ✅       | -           | Function to update modal visibility                       |
-| `pageX`                      | `number`                                        | ✅       | -           | X coordinate where modal should appear (from touch event) |
-| `pageY`                      | `number`                                        | ✅       | -           | Y coordinate where modal should appear (from touch event) |
-| `children`                   | `React.ReactNode`                               | ✅       | -           | Content to display inside the modal                       |
-| `backgroundColor`            | `string`                                        | ❌       | `undefined` | Background color for modal backdrop                       |
-| `disablePortal`              | `boolean`                                       | ❌       | `false`     | Disable portal rendering (renders in-place instead)       |
-| `disableNativeModal`         | `boolean`                                       | ❌       | `false`     | Disable React Native's Modal component                    |
-| `unMountDelayInMilliSeconds` | `number`                                        | ❌       | `250`       | Delay before unmounting after closing                     |
-| `mountDelayInMilliSeconds`   | `number`                                        | ❌       | `0`         | Delay before mounting when opening                        |
-| `mountDefault`               | `boolean`                                       | ❌       | `false`     | Whether to mount component by default                     |
-| `onComponentClose`           | `() => void`                                    | ❌       | -           | Callback fired when modal finishes closing                |
-| `onComponentShow`            | `() => void`                                    | ❌       | -           | Callback fired when modal finishes opening                |
+| Prop                         | Type                                            | Required | Default     | Description                                                                   |
+| ---------------------------- | ----------------------------------------------- | -------- | ----------- | ----------------------------------------------------------------------------- |
+| `showModal`                  | `boolean`                                       | ✅       | -           | Controls modal visibility                                                     |
+| `setShowModal`               | `React.Dispatch<React.SetStateAction<boolean>>` | ✅       | -           | Function to update modal visibility                                           |
+| `pageX`                      | `number`                                        | ✅       | -           | X coordinate where modal should appear (typically from touch event's `pageX`) |
+| `pageY`                      | `number`                                        | ✅       | -           | Y coordinate where modal should appear (typically from touch event's `pageY`) |
+| `children`                   | `React.ReactNode`                               | ✅       | -           | Content to display inside the modal                                           |
+| `backgroundColor`            | `string`                                        | ❌       | `undefined` | Background color for modal backdrop                                           |
+| `disablePortal`              | `boolean`                                       | ❌       | `false`     | Disable portal rendering (renders in-place instead)                           |
+| `disableNativeModal`         | `boolean`                                       | ❌       | `false`     | Disable React Native's Modal component                                        |
+| `unMountDelayInMilliSeconds` | `number`                                        | ❌       | `250`       | Delay before unmounting after closing                                         |
+| `mountDelayInMilliSeconds`   | `number`                                        | ❌       | `0`         | Delay before mounting when opening                                            |
+| `mountDefault`               | `boolean`                                       | ❌       | `false`     | Whether to mount component by default                                         |
+| `onComponentClose`           | `() => void`                                    | ❌       | -           | Callback fired when modal finishes closing                                    |
+| `onComponentShow`            | `() => void`                                    | ❌       | -           | Callback fired when modal finishes opening                                    |
 
 ## Usage Examples
 
@@ -635,16 +637,18 @@ If you need the modal to render in the component tree rather than at root level:
 
 ### Intelligent Positioning
 
-The `SpotModal` uses smart positioning logic to ensure your modal stays within screen bounds:
+The `SpotModal` accepts X and Y coordinates (which you typically get from touch events) and uses smart positioning logic to ensure your modal stays within screen bounds:
 
-1. **Initial Position**: Modal attempts to render at the tap coordinates
-2. **Boundary Detection**: Checks distance to screen edges
+1. **Position Input**: You provide the desired X/Y coordinates via `pageX` and `pageY` props
+2. **Boundary Detection**: The modal checks distance to all screen edges
 3. **Auto-Adjustment**:
-   - If tapping in the **top half**, modal appears below the point
-   - If tapping in the **bottom half**, modal appears above the point
-   - If tapping on the **left side**, modal appears to the right
-   - If tapping on the **right side**, modal appears to the left
-4. **Overflow Protection**: Automatically adjusts if content would overflow screen
+   - If coordinates are in the **top half**, modal renders below the point
+   - If coordinates are in the **bottom half**, modal renders above the point
+   - If coordinates are on the **left side**, modal renders to the right
+   - If coordinates are on the **right side**, modal renders to the left
+4. **Overflow Protection**: Automatically adjusts if content would overflow screen boundaries
+
+**Note:** The package expects you to provide the coordinates. You can get these from touch events (`event.nativeEvent.pageX/pageY`), calculated positions, or any other source. The modal will render at those coordinates while intelligently adjusting to stay visible.
 
 ### Orientation Handling
 
@@ -872,9 +876,10 @@ const ModalContent = React.memo(({ items }) => (
 
 ### Position Issues
 
-1. **Touch Event**: Use `event.nativeEvent.pageX/pageY` not `locationX/locationY`
-2. **Screen Coordinates**: Ensure you're using absolute screen coordinates, not relative ones
-3. **Orientation**: The component handles rotation, but make sure initial coordinates are correct
+1. **Touch Event Coordinates**: When using touch events, use `event.nativeEvent.pageX/pageY` (not `locationX/locationY`)
+2. **Coordinate Source**: You must provide valid screen coordinates - the package doesn't extract these automatically
+3. **Screen Coordinates**: Ensure you're using absolute screen coordinates, not relative ones
+4. **Orientation**: The component handles rotation, but initial coordinates must be correct for current orientation
 
 ### Animation Issues
 
