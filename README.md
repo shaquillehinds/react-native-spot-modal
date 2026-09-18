@@ -1,105 +1,62 @@
 # @shaquillehinds/react-native-spot-modal
 
-A simple, intelligent position-based modal for React Native that renders content at specific screen coordinates. Perfect for context menus, dropdowns, tooltips, and any UI element that needs to appear at a designated spot on the screen.
-
 [![npm version](https://img.shields.io/npm/v/@shaquillehinds/react-native-spot-modal.svg)](https://www.npmjs.com/package/@shaquillehinds/react-native-spot-modal)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <img src="https://raw.githubusercontent.com/shaquillehinds/react-native-spot-modal/master/assets/spotmodal.gif" alt="example" height="500"/>
 
-## Features
+A modal that renders its content at a screen coordinate you supply and keeps it
+inside the screen. Built for context menus, anchored dropdowns and tooltips.
 
-- **🎯 Coordinate-Based Positioning** - Render modals at any X/Y coordinates on the screen
-- **🧠 Smart Boundary Detection** - Automatically adjusts position to stay within screen bounds
-- **📱 Orientation Aware** - Handles device rotation and recalculates position accordingly
-- **🎨 Fully Customizable** - Control appearance, animations, and behavior
-- **⚡ Smooth Animations** - Built with react-native-reanimated for 60fps animations
-- **🔌 Portal Support** - Render modals at the root level to avoid z-index issues
-- **🪶 Lightweight** - Minimal dependencies, maximum performance
-- **📦 TypeScript Support** - Fully typed for excellent IntelliSense
+This document describes `@shaquillehinds/react-native-spot-modal` 0.1.0 running on
+`@shaquillehinds/react-native-essentials` 1.15.0 or later, which supplies the
+portal, the mount/unmount timing and the backdrop press. Behaviour described as
+"derived from source" has not been run on a device.
+
+## Table of contents
+
+- [Installation](#installation)
+- [Setup](#setup)
+- [Quick start](#quick-start)
+- [Coordinates](#coordinates)
+- [Placement](#placement)
+- [Rendering modes and the portal](#rendering-modes-and-the-portal)
+- [Context inside the modal](#context-inside-the-modal)
+- [Opening, closing and timing](#opening-closing-and-timing)
+- [Backdrop and touches](#backdrop-and-touches)
+- [Sizing and styling the content](#sizing-and-styling-the-content)
+- [Rotation](#rotation)
+- [Android back button](#android-back-button)
+- [API reference](#api-reference)
+- [Recipes](#recipes)
+- [Troubleshooting](#troubleshooting)
+- [Known issues](#known-issues)
+- [Upgrading from 0.0.x](#upgrading-from-00x)
+- [AI agent rules](#ai-agent-rules)
+- [License](#license)
 
 ## Installation
 
-```bash
-npm install @shaquillehinds/react-native-spot-modal
-# or
-yarn add @shaquillehinds/react-native-spot-modal
-```
-
-### Peer Dependencies
-
-This package requires the following peer dependencies:
-
-```bash
+```sh
+npm install @shaquillehinds/react-native-spot-modal @shaquillehinds/react-native-essentials
 npm install react-native-reanimated react-native-gesture-handler
-# or
-yarn add react-native-reanimated react-native-gesture-handler
 ```
 
-**Note:** Make sure to complete the [react-native-reanimated installation](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/) steps for your platform.
+All three companions are required peer dependencies:
 
-### Additional Dependency
+| Package                                   | Range      | Why                                                                                                      |
+| ----------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------- |
+| `@shaquillehinds/react-native-essentials` | `>=1.15.0` | Portal, `ComponentMounter` (with `keepMountedOnReopen`), `ModalWrapper`, `Press`, `useDeviceOrientation` |
+| `react-native-reanimated`                 | `>=3.0.0`  | Fade and position                                                                                        |
+| `react-native-gesture-handler`            | `>=2.7.0`  | Used by essentials' `ModalWrapper`                                                                       |
 
-This package depends on:
+Finish the Reanimated setup for your platform (Babel plugin, cache reset).
 
-- `@shaquillehinds/react-native-essentials` - Provides core utilities for modals, portals, and component mounting
+## Setup
 
-## Portal Provider Setup
-
-**IMPORTANT:** To use `SpotModal` with the portal system (enabled by default), you must wrap your app with `SpotModalPortalProvider` at the root level. This ensures modals render at the top layer of your app, avoiding z-index conflicts.
-
-### Basic Setup
-
-Wrap your root component with `SpotModalPortalProvider` in your entry file (typically `App.tsx`, `App.js`, or `_layout.tsx` for Expo Router):
+Mount one portal provider near the root, under `GestureHandlerRootView`.
 
 ```tsx
-import React from 'react';
-import { SpotModalPortalProvider } from '@shaquillehinds/react-native-spot-modal';
-// or
-// import { PortalProvider as SpotModalPortalProvider } from '@shaquillehinds/react-native-essentials';
-
-export default function App() {
-  return (
-    <SpotModalPortalProvider>
-      {/* Your app content goes here */}
-      <YourAppContent />
-    </SpotModalPortalProvider>
-  );
-}
-```
-
-### Setup with React Navigation
-
-If you're using React Navigation, place the `SpotModalPortalProvider` inside your `NavigationContainer`:
-
-```tsx
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SpotModalPortalProvider } from '@shaquillehinds/react-native-spot-modal';
-
-const Stack = createNativeStackNavigator();
-
-export default function App() {
-  return (
-    <NavigationContainer>
-      <SpotModalPortalProvider>
-        <Stack.Navigator>
-          <Stack.Screen name="Home" component={HomeScreen} />
-          {/* Other screens */}
-        </Stack.Navigator>
-      </SpotModalPortalProvider>
-    </NavigationContainer>
-  );
-}
-```
-
-### Setup with Gesture Handler
-
-**Important:** When using `react-native-gesture-handler`, place `SpotModalPortalProvider` **under** `GestureHandlerRootView` to avoid app freezing issues:
-
-```tsx
-import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SpotModalPortalProvider } from '@shaquillehinds/react-native-spot-modal';
 
@@ -107,99 +64,63 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SpotModalPortalProvider>
-        <YourAppContent />
+        <RootNavigator />
       </SpotModalPortalProvider>
     </GestureHandlerRootView>
   );
 }
 ```
 
-### Complete Setup Example (with Multiple Providers)
+`SpotModalPortalProvider` is `PortalProvider` from essentials under another
+name. Other `@shaquillehinds` packages re-export the same component
+(`BottomSheetPortalProvider` and so on) and they all share one React context. If
+your app already mounts one of them, `SpotModal` uses it. A second provider is
+unnecessary.
 
-Here's a full example showing proper provider nesting order:
+Where you put the provider decides which context the modal's children can see.
+Read [Context inside the modal](#context-inside-the-modal) before choosing
+between inside and outside `NavigationContainer`.
 
-```tsx
-import React from 'react';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { NavigationContainer } from '@react-navigation/native';
-import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import { SpotModalPortalProvider } from '@shaquillehinds/react-native-spot-modal';
+The provider is optional. Without one, `SpotModal` falls back to React Native's
+`Modal` with no warning. See [Rendering modes](#rendering-modes-and-the-portal).
 
-const queryClient = new QueryClient();
-
-export default function App() {
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <NavigationContainer>
-          <SpotModalPortalProvider>
-            {/* Your app screens and navigation */}
-            <YourAppContent />
-          </SpotModalPortalProvider>
-        </NavigationContainer>
-      </QueryClientProvider>
-    </GestureHandlerRootView>
-  );
-}
-```
-
-### Disabling Portal (Optional)
-
-If you don't want to use the portal system, you can disable it per modal using the `disablePortal` prop. This will render the modal in-place within your component tree:
+## Quick start
 
 ```tsx
-<SpotModal
-  showModal={showModal}
-  setShowModal={setShowModal}
-  pageX={position.x}
-  pageY={position.y}
-  disablePortal={true} // Renders without portal
->
-  <View>
-    <Text>In-place modal</Text>
-  </View>
-</SpotModal>
-```
-
-**Note:** When using `disablePortal={true}`, you don't need `SpotModalPortalProvider`, but you may encounter z-index issues depending on your component hierarchy.
-
-## Quick Start
-
-**Prerequisites:** Make sure you've set up the `SpotModalPortalProvider` as described in the [Portal Provider Setup](#portal-provider-setup) section above.
-
-Here's a simple example to get you started:
-
-```tsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type GestureResponderEvent,
+} from 'react-native';
 import { SpotModal } from '@shaquillehinds/react-native-spot-modal';
 
-export default function App() {
-  const [showModal, setShowModal] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+export function Example() {
+  const [show, setShow] = useState(false);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
 
-  const handlePress = (event) => {
-    const { pageX, pageY } = event.nativeEvent;
-    setPosition({ x: pageX, y: pageY });
-    setShowModal(true);
+  const open = (e: GestureResponderEvent) => {
+    setPos({ x: e.nativeEvent.pageX, y: e.nativeEvent.pageY });
+    setShow(true);
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={handlePress} style={styles.button}>
-        <Text>Tap anywhere on this button</Text>
-      </TouchableOpacity>
+    <View style={styles.screen}>
+      <Pressable onPress={open} style={styles.button}>
+        <Text>Open</Text>
+      </Pressable>
 
       <SpotModal
-        showModal={showModal}
-        setShowModal={setShowModal}
-        pageX={position.x}
-        pageY={position.y}
-        backgroundColor="rgba(0, 0, 0, 0.5)"
+        showModal={show}
+        setShowModal={setShow}
+        pageX={pos.x}
+        pageY={pos.y}
+        backgroundColor="rgba(0,0,0,0.4)"
       >
-        <View style={styles.modalContent}>
-          <Text>Modal Content</Text>
-          <Text>Positioned at tap location!</Text>
+        <View style={styles.card}>
+          <Text>Rendered at the tap point</Text>
         </View>
       </SpotModal>
     </View>
@@ -207,720 +128,572 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  button: {
-    padding: 20,
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
+  screen: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  button: { padding: 16, borderRadius: 8, backgroundColor: '#007AFF' },
+  card: {
+    maxWidth: 280,
+    padding: 16,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    backgroundColor: 'white',
     elevation: 5,
   },
 });
 ```
 
-## Exports
+Two details in that example matter. The position and the visibility are set in
+the same handler, so the modal never shows at a stale spot. The card has its own
+background and `maxWidth`, because the package supplies neither.
 
-This package exports the following components and utilities:
+## Coordinates
 
-### Main Component
+`pageX` and `pageY` are root-view coordinates.
 
-- **`SpotModal`** - The primary modal component (default export)
-- **`SmoothSpotModalProps`** - TypeScript type for modal props
-- **`SpotModalProps`** - TypeScript type for core modal props
+| Source          | Use                                                      |
+| --------------- | -------------------------------------------------------- |
+| Touch event     | `e.nativeEvent.pageX`, `e.nativeEvent.pageY`             |
+| Element         | `ref.current.measure((x, y, w, h, pageX, pageY) => ...)` |
+| Gesture Handler | `e.absoluteX`, `e.absoluteY`                             |
 
-### Portal System Utilities
+`locationX` / `locationY` and RNGH `x` / `y` are relative to the touched view and
+will put the modal in the wrong place.
 
-The package also re-exports portal utilities from `@shaquillehinds/react-native-essentials` for convenience:
+The modal follows the props while it is open. Changing `pageX` / `pageY` moves
+it, without animation. Set the position in the same handler that sets
+`showModal` to `true`. If the position arrives later, the modal fades in at the
+previous position and then jumps. When the position comes from an async
+`measure`, open inside the callback.
 
-- **`SpotModalPortalProvider`** - Wrap your app with this component to enable portal rendering
-- **`useSpotModalPortalComponent`** - Hook to programmatically add components to portal
-- **`useSpotModalPortal`** - Hook to access portal context
-- **`PortalItem`** - TypeScript type for portal items
+## Placement
 
-```typescript
-// You can import portal utilities directly from this package
-import {
-  SpotModal,
-  SpotModalPortalProvider,
-  useSpotModalPortalComponent,
-  useSpotModalPortal,
-} from '@shaquillehinds/react-native-spot-modal';
+The direction is chosen from the half of the screen the point is in. There is no
+prop to override it.
 
-// Or use the original names from react-native-essentials
-import {
-  PortalProvider,
-  usePortalComponent,
-  usePortal,
-} from '@shaquillehinds/react-native-essentials';
-```
+| Point is in | Result                                                      |
+| ----------- | ----------------------------------------------------------- |
+| Top half    | Top edge of the content at `pageY`. Content extends down.   |
+| Bottom half | Bottom edge of the content at `pageY`. Content extends up.  |
+| Left half   | Left edge of the content at `pageX`. Content extends right. |
+| Right half  | Right edge of the content at `pageX`. Content extends left. |
 
-## API Reference
+If the content would cross an edge it is pushed back to 5% of the screen width
+from the left or right, or 5% of the screen height from the top or bottom.
 
-### SpotModal Props
+The content is measured with `onLayout`, positioned, then faded in. It is
+invisible until positioned, so there is no jump on open. It is repositioned,
+without animation, when its size changes, when the coordinates change and when
+the device rotates. Content with zero width or height is never shown.
 
-| Prop                         | Type                                            | Required | Default     | Description                                                                   |
-| ---------------------------- | ----------------------------------------------- | -------- | ----------- | ----------------------------------------------------------------------------- |
-| `showModal`                  | `boolean`                                       | ✅       | -           | Controls modal visibility                                                     |
-| `setShowModal`               | `React.Dispatch<React.SetStateAction<boolean>>` | ✅       | -           | Function to update modal visibility                                           |
-| `pageX`                      | `number`                                        | ✅       | -           | X coordinate where modal should appear (typically from touch event's `pageX`) |
-| `pageY`                      | `number`                                        | ✅       | -           | Y coordinate where modal should appear (typically from touch event's `pageY`) |
-| `children`                   | `React.ReactNode`                               | ✅       | -           | Content to display inside the modal                                           |
-| `backgroundColor`            | `string`                                        | ❌       | `undefined` | Background color for modal backdrop                                           |
-| `disablePortal`              | `boolean`                                       | ❌       | `false`     | Disable portal rendering (renders in-place instead)                           |
-| `disableNativeModal`         | `boolean`                                       | ❌       | `false`     | Disable React Native's Modal component                                        |
-| `unMountDelayInMilliSeconds` | `number`                                        | ❌       | `250`       | Delay before unmounting after closing                                         |
-| `mountDelayInMilliSeconds`   | `number`                                        | ❌       | `0`         | Delay before mounting when opening                                            |
-| `mountDefault`               | `boolean`                                       | ❌       | `false`     | Whether to mount component by default                                         |
-| `onComponentClose`           | `() => void`                                    | ❌       | -           | Callback fired when modal finishes closing                                    |
-| `onComponentShow`            | `() => void`                                    | ❌       | -           | Callback fired when modal finishes opening                                    |
+Screen size comes from `Dimensions.get('screen')`.
 
-## Usage Examples
+## Rendering modes and the portal
 
-### Context Menu
+| Path          | Taken when                                           | What renders                                                                                                     |
+| ------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Portal        | A provider is mounted and `disablePortal` is unset   | An absolute-fill `View` inside the provider's overlay, above the app                                             |
+| Native modal  | `disablePortal` is `true`, or no provider is mounted | React Native `Modal` with `transparent` and `statusBarTranslucent`, children wrapped in `GestureHandlerRootView` |
+| In-place view | Native modal path plus `disableNativeModal`          | An absolute-fill `View` with a very high `zIndex` inside the parent                                              |
 
-Create a context menu that appears where the user long-presses:
+- `disablePortal` on its own renders in a native `Modal`, which sits above
+  everything. Stacking problems only arise when you add `disableNativeModal`.
+- `disableNativeModal` has no effect on the portal path. The overlay is already
+  above the app, so that path never uses a native `Modal`.
+- A missing provider is not an error. You get the native modal path.
+
+Toggling `disablePortal` at runtime is safe. The copy on the old path unmounts
+and a fresh one mounts on the new path, so the content's local state resets.
+
+Inside a React Native `<Modal>`, or a native modal or form-sheet screen, use
+`disablePortal`. The portal overlay lives in the window underneath, so a portal
+spot modal opens out of sight. (Derived from how native presentation works.)
+
+### Cost of the portal path
+
+Each render of a component that contains `<SpotModal>` sends a fresh element to
+the provider with `portal.update`, open or closed. That is one `setState` on the
+root provider per host render. Keep `<SpotModal>` out of components that render
+at a high rate, and keep one instance per screen in place of one per list row.
+
+## Context inside the modal
+
+On the portal path the children are rendered by the provider, so they resolve
+React context from the provider's position in the tree.
+
+| Children can use                            | Children cannot use                               |
+| ------------------------------------------- | ------------------------------------------------- |
+| Providers mounted above the portal provider | `useRoute()`                                      |
+| Module-level stores and singletons          | The screen's own `useNavigation()`                |
+| Props and closures from the wrapper         | Any context provided by the screen or its parents |
+
+With the provider inside `NavigationContainer`, container-level hooks such as
+`useTheme` work and `useNavigation` resolves to the root navigator. With the
+provider outside it, no navigation hook works. Screen-level context is
+unavailable in both cases.
+
+The reliable pattern is to read what you need in the component that renders
+`<SpotModal>` and pass it to the content as props. When that is not practical,
+`disablePortal` keeps the children in the local tree.
+
+## Opening, closing and timing
+
+Mounting is handled by essentials' `ComponentMounter`.
+
+| Step                                           | What happens                                                                                                                                                                                       |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `showModal` → `true`                           | After `mountDelayInMilliSeconds` (default 0) the inner modal mounts and `onComponentShow` fires. The content lays out, is positioned, then fades in over 300 ms together with the backdrop colour. |
+| `showModal` → `false`                          | Content and backdrop fade out over `unMountDelayInMilliSeconds` (default 250). Then the inner modal unmounts and `onComponentClose` fires.                                                         |
+| `showModal` → `true` again during the fade-out | The pending unmount is cancelled. The same instance fades back in. Content state is kept and `onComponentShow` does not fire again.                                                                |
+
+- `unMountDelayInMilliSeconds` is the length of the close animation. `0` is
+  honoured and removes the view at once.
+- `onComponentShow` fires at mount, before the fade-in starts.
+- Callbacks and delays are read when they are used. Inline functions that read
+  current state work as expected, and changing a delay between opens takes
+  effect.
+- The children unmount on every completed close. Local state in them resets.
+
+## Backdrop and touches
+
+The backdrop is a full-screen essentials `Press`. Tapping it calls
+`setShowModal(false)` after a 50 ms activation delay. Set `disableBackdropPress`
+to stop that.
+
+- `backgroundColor` colours it. The default is `undefined`, which is transparent.
+  It still swallows every touch. Pass-through tooltips are not possible.
+- The colour fades in and out with the content.
+- The backdrop stays for the whole unmount delay. Nothing underneath can be
+  pressed during that time, so keep the delay at or below 300.
+- Touches that end inside the content are stopped before they reach the
+  backdrop. Buttons inside the content need to call `setShowModal(false)`
+  themselves.
+
+## Sizing and styling the content
+
+The package wraps your children in an absolutely positioned `Animated.View` with
+`maxHeight` set to 85% of the screen height and nothing else. You supply the
+background, padding, radius, shadow and width.
+
+- Set a `maxWidth` on the content. There is no width cap, and content wider than
+  the screen minus padding runs off the edge.
+- Put long content in a `ScrollView` so the height cap clips it.
+- There is no `style` prop on `SpotModal`.
+
+## Rotation
+
+On rotation the point is rescaled proportionally (`pageX / oldWidth * newWidth`,
+same for Y) and the modal is repositioned, whether or not the content changed
+size. If you pass new coordinates after rotating, they are taken as coordinates
+in the new orientation. (Derived from source.)
+
+## Android back button
+
+Hardware back closes the modal on every rendering path while `showModal` is
+`true`. The native modal path uses `Modal`'s `onRequestClose`. The portal and
+in-place paths register a `BackHandler` listener. Back does not reach the
+navigator underneath.
+
+Set `disableAndroidBackButton` to make back do nothing while the modal is open.
+You do not need your own `BackHandler` listener.
+
+## API reference
+
+### Exports
+
+| Export                        | Kind      | Notes                                                                           |
+| ----------------------------- | --------- | ------------------------------------------------------------------------------- |
+| `SpotModal`                   | component | Named and default export                                                        |
+| `SpotModalProps`              | type      | All props                                                                       |
+| `_SpotModalProps`             | type      | Props without the mounter options                                               |
+| `SpotModalPortalProvider`     | component | `PortalProvider` from essentials                                                |
+| `useSpotModalPortal`          | hook      | `usePortal`. Returns `{ mount, update, unmount }` or `null` without a provider. |
+| `useSpotModalPortalComponent` | hook      | `usePortalComponent({ name, Component, disable?, CustomPortalContext? })`       |
+| `PortalItem`                  | type      | `{ key: string \| number; element: ReactNode }`                                 |
+
+### `SpotModal` props
+
+| Prop                         | Type                          | Required | Default     | Notes                                                             |
+| ---------------------------- | ----------------------------- | -------- | ----------- | ----------------------------------------------------------------- |
+| `showModal`                  | `boolean`                     | yes      |             |                                                                   |
+| `setShowModal`               | `(show: boolean) => void`     | yes      |             | Only ever called with `false`. A `useState` setter is assignable. |
+| `pageX`                      | `number`                      | yes      |             | Followed while open                                               |
+| `pageY`                      | `number`                      | yes      |             | Followed while open                                               |
+| `children`                   | `React.ReactNode`             | yes      |             | Mounted only while open                                           |
+| `backgroundColor`            | `string`                      | no       | `undefined` | Backdrop colour. Fades with the content.                          |
+| `disableBackdropPress`       | `boolean`                     | no       | `false`     | Backdrop tap does not close                                       |
+| `disableAndroidBackButton`   | `boolean`                     | no       | `false`     | Back does nothing while open                                      |
+| `disablePortal`              | `boolean`                     | no       | `false`     | Native modal path                                                 |
+| `disableNativeModal`         | `boolean`                     | no       | `false`     | Non-portal path only                                              |
+| `mountDelayInMilliSeconds`   | `number`                      | no       | `0`         |                                                                   |
+| `unMountDelayInMilliSeconds` | `number`                      | no       | `250`       | Unmount delay and fade-out length                                 |
+| `onComponentShow`            | `() => void \| Promise<void>` | no       |             | Fires at mount                                                    |
+| `onComponentClose`           | `() => void \| Promise<void>` | no       |             | Fires at unmount                                                  |
+
+`mountDefault` from `ComponentMounterProps` is not part of `SpotModalProps`.
+
+### `SpotModalPortalProvider` props
+
+| Prop                  | Type                   | Default | Notes                                                                                             |
+| --------------------- | ---------------------- | ------- | ------------------------------------------------------------------------------------------------- |
+| `children`            | `ReactNode`            |         |                                                                                                   |
+| `unMountBufferTimeMS` | `number`               | `100`   | Wait before a portal item is removed                                                              |
+| `updateBufferTimeMS`  | `number`               | none    | Throttle for `update`                                                                             |
+| `CustomPortalContext` | `typeof PortalContext` | none    | `SpotModal` only reads the default context. A provider given a custom context is invisible to it. |
+
+### Fixed values
+
+| Value                         | Amount                                         |
+| ----------------------------- | ---------------------------------------------- |
+| Fade in                       | 300 ms                                         |
+| Backdrop tap activation delay | 50 ms                                          |
+| Edge padding                  | 5% of screen width and 5% of screen height     |
+| Content max height            | 85% of screen height                           |
+| Portal id                     | `spot-modal-<random>-<timestamp>` per instance |
+
+## Recipes
+
+Each recipe typechecks against 0.1.0 under `strict`.
+
+### Context menu on long press
 
 ```tsx
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { SpotModal } from '@shaquillehinds/react-native-spot-modal';
+function MessageBubble({ message, onCopy, onDelete }: MessageBubbleProps) {
+  const [show, setShow] = useState(false);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
 
-function ContextMenu() {
-  const [showMenu, setShowMenu] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  const handleLongPress = (event) => {
-    const { pageX, pageY } = event.nativeEvent;
-    setPosition({ x: pageX, y: pageY });
-    setShowMenu(true);
+  const open = (e: GestureResponderEvent) => {
+    setPos({ x: e.nativeEvent.pageX, y: e.nativeEvent.pageY });
+    setShow(true);
   };
-
-  const handleMenuAction = (action: string) => {
-    console.log(`Action: ${action}`);
-    setShowMenu(false);
+  const run = (action: () => void) => () => {
+    setShow(false);
+    action();
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onLongPress={handleLongPress} style={styles.content}>
-        <Text>Long press me for options</Text>
-      </TouchableOpacity>
-
+    <>
+      <Pressable onLongPress={open}>
+        <Text>{message.text}</Text>
+      </Pressable>
       <SpotModal
-        showModal={showMenu}
-        setShowModal={setShowMenu}
-        pageX={position.x}
-        pageY={position.y}
-        backgroundColor="rgba(0, 0, 0, 0.4)"
+        showModal={show}
+        setShowModal={setShow}
+        pageX={pos.x}
+        pageY={pos.y}
+        backgroundColor="rgba(0,0,0,0.3)"
       >
         <View style={styles.menu}>
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => handleMenuAction('copy')}
-          >
-            <Text style={styles.menuText}>Copy</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => handleMenuAction('paste')}
-          >
-            <Text style={styles.menuText}>Paste</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => handleMenuAction('delete')}
-          >
-            <Text style={[styles.menuText, styles.deleteText]}>Delete</Text>
-          </TouchableOpacity>
+          <Pressable style={styles.menuItem} onPress={run(onCopy)}>
+            <Text>Copy</Text>
+          </Pressable>
+          <Pressable style={styles.menuItem} onPress={run(onDelete)}>
+            <Text>Delete</Text>
+          </Pressable>
         </View>
       </SpotModal>
-    </View>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    padding: 40,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-  },
-  menu: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    overflow: 'hidden',
-    minWidth: 150,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  menuItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  menuText: {
-    fontSize: 16,
-  },
-  deleteText: {
-    color: '#ff3b30',
-  },
-});
 ```
 
-### Dropdown Selector
-
-Use as a dropdown that appears below a button:
+### One modal for a whole list
 
 ```tsx
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { SpotModal } from '@shaquillehinds/react-native-spot-modal';
+function Inbox({ items }: { items: Item[] }) {
+  const [show, setShow] = useState(false);
+  const [menu, setMenu] = useState<{ x: number; y: number; item: Item | null }>(
+    { x: 0, y: 0, item: null }
+  );
 
-function DropdownSelector() {
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [selected, setSelected] = useState('Option 1');
+  const openMenu = useCallback((item: Item, e: GestureResponderEvent) => {
+    setMenu({ x: e.nativeEvent.pageX, y: e.nativeEvent.pageY, item });
+    setShow(true);
+  }, []);
 
-  const options = ['Option 1', 'Option 2', 'Option 3', 'Option 4'];
+  return (
+    <>
+      <FlatList
+        data={items}
+        keyExtractor={(i) => i.id}
+        renderItem={({ item }) => <Row item={item} onLongPress={openMenu} />}
+      />
+      <SpotModal
+        showModal={show}
+        setShowModal={setShow}
+        pageX={menu.x}
+        pageY={menu.y}
+      >
+        <ItemMenuContent item={menu.item} close={() => setShow(false)} />
+      </SpotModal>
+    </>
+  );
+}
+```
 
-  const handleButtonPress = (event) => {
-    const { pageX, pageY } = event.nativeEvent;
-    // Offset Y to appear below button
-    setPosition({ x: pageX, y: pageY + 20 });
-    setShowDropdown(true);
-  };
+`ItemMenuContent` owns any state and data hooks, so they only run while the menu
+is open.
 
-  const handleSelect = (option: string) => {
-    setSelected(option);
-    setShowDropdown(false);
+### Dropdown anchored to an element
+
+A fixed offset such as `pageY + 20` covers the button when it sits in the bottom
+half of the screen. Anchor to the element's far edge instead.
+
+```tsx
+function Dropdown({ options, value, onChange }: DropdownProps) {
+  const anchor = useRef<View>(null);
+  const [show, setShow] = useState(false);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+
+  const open = () => {
+    anchor.current?.measure((_x, _y, w, h, px, py) => {
+      const screen = Dimensions.get('screen');
+      const lowerHalf = py >= screen.height / 2;
+      const rightHalf = px >= screen.width / 2;
+      setPos({ x: rightHalf ? px + w : px, y: lowerHalf ? py : py + h });
+      setShow(true);
+    });
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        onPress={handleButtonPress}
-        style={styles.dropdownButton}
-      >
-        <Text style={styles.buttonText}>{selected}</Text>
-        <Text style={styles.arrow}>▼</Text>
-      </TouchableOpacity>
-
+    <>
+      <Pressable ref={anchor} onPress={open} style={styles.trigger}>
+        <Text>{value}</Text>
+      </Pressable>
       <SpotModal
-        showModal={showDropdown}
-        setShowModal={setShowDropdown}
-        pageX={position.x}
-        pageY={position.y}
-        backgroundColor="transparent"
+        showModal={show}
+        setShowModal={setShow}
+        pageX={pos.x}
+        pageY={pos.y}
       >
-        <View style={styles.dropdownMenu}>
-          {options.map((option) => (
-            <TouchableOpacity
-              key={option}
-              style={[
-                styles.dropdownItem,
-                selected === option && styles.selectedItem,
-              ]}
-              onPress={() => handleSelect(option)}
+        <ScrollView style={styles.list}>
+          {options.map((o) => (
+            <Pressable
+              key={o}
+              style={styles.menuItem}
+              onPress={() => {
+                onChange(o);
+                setShow(false);
+              }}
             >
-              <Text
-                style={[
-                  styles.dropdownText,
-                  selected === option && styles.selectedText,
-                ]}
-              >
-                {option}
-              </Text>
-            </TouchableOpacity>
+              <Text>{o}</Text>
+            </Pressable>
           ))}
-        </View>
+        </ScrollView>
       </SpotModal>
-    </View>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dropdownButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    minWidth: 150,
-    justifyContent: 'space-between',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-  },
-  arrow: {
-    color: 'white',
-    marginLeft: 8,
-  },
-  dropdownMenu: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    minWidth: 150,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  dropdownItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  selectedItem: {
-    backgroundColor: '#f0f8ff',
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  selectedText: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-});
 ```
+
+A trigger that straddles the vertical midline will be partly covered whichever
+edge you choose.
 
 ### Tooltip
 
-Create a tooltip that appears near an information icon:
-
 ```tsx
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { SpotModal } from '@shaquillehinds/react-native-spot-modal';
-
-function TooltipExample() {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  const handleInfoPress = (event) => {
-    const { pageX, pageY } = event.nativeEvent;
-    setPosition({ x: pageX, y: pageY });
-    setShowTooltip(true);
-  };
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.label}>Your Score</Text>
-        <TouchableOpacity onPress={handleInfoPress} style={styles.infoIcon}>
-          <Text style={styles.infoText}>ⓘ</Text>
-        </TouchableOpacity>
-      </View>
-
-      <SpotModal
-        showModal={showTooltip}
-        setShowModal={setShowTooltip}
-        pageX={position.x}
-        pageY={position.y}
-        backgroundColor="transparent"
-        unMountDelayInMilliSeconds={200}
-      >
-        <View style={styles.tooltip}>
-          <Text style={styles.tooltipText}>
-            Your score is calculated based on accuracy, speed, and consistency
-            across all completed exercises.
-          </Text>
-        </View>
-      </SpotModal>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  label: {
-    fontSize: 18,
-    marginRight: 8,
-  },
-  infoIcon: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoText: {
-    fontSize: 20,
-    color: '#007AFF',
-  },
-  tooltip: {
-    backgroundColor: '#333',
-    padding: 12,
-    borderRadius: 8,
-    maxWidth: 250,
-  },
-  tooltipText: {
-    color: 'white',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-});
-```
-
-### With Custom Animation Timing
-
-Control the mount and unmount timing for custom animations:
-
-```tsx
-<SpotModal
-  showModal={showModal}
-  setShowModal={setShowModal}
-  pageX={position.x}
-  pageY={position.y}
-  unMountDelayInMilliSeconds={500} // Longer fade out
-  mountDelayInMilliSeconds={100} // Slight delay on open
-  onComponentShow={() => console.log('Modal opened')}
-  onComponentClose={() => console.log('Modal closed')}
->
-  <View style={styles.content}>
-    <Text>Custom timing!</Text>
+<SpotModal showModal={show} setShowModal={setShow} pageX={pos.x} pageY={pos.y}>
+  <View
+    style={{
+      maxWidth: 250,
+      padding: 12,
+      borderRadius: 8,
+      backgroundColor: '#222',
+    }}
+  >
+    <Text style={{ color: 'white' }}>
+      Score is based on accuracy, speed and consistency.
+    </Text>
   </View>
 </SpotModal>
 ```
 
-### Without Portal (In-Place Rendering)
+The tooltip blocks touches while open and is dismissed by a tap anywhere.
 
-If you need the modal to render in the component tree rather than at root level:
-
-```tsx
-<SpotModal
-  showModal={showModal}
-  setShowModal={setShowModal}
-  pageX={position.x}
-  pageY={position.y}
-  disablePortal={true} // Renders in-place instead of portal
->
-  <View style={styles.content}>
-    <Text>In-place modal</Text>
-  </View>
-</SpotModal>
-```
-
-## How It Works
-
-### Intelligent Positioning
-
-The `SpotModal` accepts X and Y coordinates (which you typically get from touch events) and uses smart positioning logic to ensure your modal stays within screen bounds:
-
-1. **Position Input**: You provide the desired X/Y coordinates via `pageX` and `pageY` props
-2. **Boundary Detection**: The modal checks distance to all screen edges
-3. **Auto-Adjustment**:
-   - If coordinates are in the **top half**, modal renders below the point
-   - If coordinates are in the **bottom half**, modal renders above the point
-   - If coordinates are on the **left side**, modal renders to the right
-   - If coordinates are on the **right side**, modal renders to the left
-4. **Overflow Protection**: Automatically adjusts if content would overflow screen boundaries
-
-**Note:** The package expects you to provide the coordinates. You can get these from touch events (`event.nativeEvent.pageX/pageY`), calculated positions, or any other source. The modal will render at those coordinates while intelligently adjusting to stay visible.
-
-### Orientation Handling
-
-The component automatically handles device rotation by:
-
-- Detecting orientation changes
-- Recalculating positions based on new dimensions
-- Maintaining modal visibility during rotation
-
-### Portal System
-
-By default, modals render through a portal system (provided by `@shaquillehinds/react-native-essentials`), which:
-
-- Renders modals at the root level of your app
-- Avoids z-index conflicts with other components
-- Ensures modals always appear on top
-- Can be disabled with `disablePortal={true}` if needed
-
-## Advanced Usage
-
-### Multiple Modals
-
-You can have multiple spot modals, each with their own state:
+### Reusable hook
 
 ```tsx
-function MultiModalExample() {
-  const [modal1, setModal1] = useState({ show: false, x: 0, y: 0 });
-  const [modal2, setModal2] = useState({ show: false, x: 0, y: 0 });
-
-  const handlePress1 = (event) => {
-    const { pageX, pageY } = event.nativeEvent;
-    setModal1({ show: true, x: pageX, y: pageY });
-  };
-
-  const handlePress2 = (event) => {
-    const { pageX, pageY } = event.nativeEvent;
-    setModal2({ show: true, x: pageX, y: pageY });
-  };
-
-  return (
-    <>
-      <TouchableOpacity onPress={handlePress1}>
-        <Text>Open Modal 1</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={handlePress2}>
-        <Text>Open Modal 2</Text>
-      </TouchableOpacity>
-
-      <SpotModal
-        showModal={modal1.show}
-        setShowModal={(show) => setModal1((prev) => ({ ...prev, show }))}
-        pageX={modal1.x}
-        pageY={modal1.y}
-      >
-        <View>
-          <Text>Modal 1</Text>
-        </View>
-      </SpotModal>
-
-      <SpotModal
-        showModal={modal2.show}
-        setShowModal={(show) => setModal2((prev) => ({ ...prev, show }))}
-        pageX={modal2.x}
-        pageY={modal2.y}
-      >
-        <View>
-          <Text>Modal 2</Text>
-        </View>
-      </SpotModal>
-    </>
-  );
-}
-```
-
-### Custom Hook Pattern
-
-Create a reusable hook for spot modal state management:
-
-```tsx
-import { useState, useCallback } from 'react';
-
-function useSpotModal() {
+export function useSpotModal() {
   const [showModal, setShowModal] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [pos, setPos] = useState({ x: 0, y: 0 });
 
-  const openModal = useCallback((event) => {
-    const { pageX, pageY } = event.nativeEvent;
-    setPosition({ x: pageX, y: pageY });
+  const openAt = useCallback((x: number, y: number) => {
+    setPos({ x, y });
     setShowModal(true);
   }, []);
-
-  const closeModal = useCallback(() => {
-    setShowModal(false);
-  }, []);
+  const openFromEvent = useCallback(
+    (e: GestureResponderEvent) =>
+      openAt(e.nativeEvent.pageX, e.nativeEvent.pageY),
+    [openAt]
+  );
+  const close = useCallback(() => setShowModal(false), []);
 
   return {
-    showModal,
-    setShowModal,
-    position,
-    openModal,
-    closeModal,
+    openAt,
+    openFromEvent,
+    close,
+    modalProps: { showModal, setShowModal, pageX: pos.x, pageY: pos.y },
   };
 }
 
-// Usage
-function MyComponent() {
-  const menu = useSpotModal();
-
-  return (
-    <>
-      <TouchableOpacity onPress={menu.openModal}>
-        <Text>Open Menu</Text>
-      </TouchableOpacity>
-
-      <SpotModal
-        showModal={menu.showModal}
-        setShowModal={menu.setShowModal}
-        pageX={menu.position.x}
-        pageY={menu.position.y}
-      >
-        <View>
-          <Text>Menu Content</Text>
-        </View>
-      </SpotModal>
-    </>
-  );
-}
+// usage
+const menu = useSpotModal();
+<SpotModal {...menu.modalProps}>{content}</SpotModal>;
 ```
 
-### Integration with Gesture Handler
+Calling `openAt` while the modal is already open moves it.
 
-For more complex gesture interactions:
+### Visibility and position in one state object
 
 ```tsx
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+const [menu, setMenu] = useState({ show: false, x: 0, y: 0 });
 
-function GestureExample() {
-  const [showModal, setShowModal] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  const longPress = Gesture.LongPress().onStart((event) => {
-    setPosition({ x: event.absoluteX, y: event.absoluteY });
-    setShowModal(true);
-  });
-
-  return (
-    <>
-      <GestureDetector gesture={longPress}>
-        <View style={styles.container}>
-          <Text>Long press anywhere</Text>
-        </View>
-      </GestureDetector>
-
-      <SpotModal
-        showModal={showModal}
-        setShowModal={setShowModal}
-        pageX={position.x}
-        pageY={position.y}
-      >
-        <View>
-          <Text>Gesture-triggered modal</Text>
-        </View>
-      </SpotModal>
-    </>
-  );
-}
-```
-
-## TypeScript
-
-The package is fully typed. Here are the main type definitions:
-
-```typescript
-type _SpotModalProps = {
-  pageX: number;
-  pageY: number;
-  children: React.ReactNode;
-  showModal: boolean;
-  setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
-  backgroundColor?: string;
-  disablePortal?: boolean;
-  disableNativeModal?: boolean;
-};
-
-type SpotModalProps = _SpotModalProps & {
-  unMountDelayInMilliSeconds?: number;
-  mountDelayInMilliSeconds?: number;
-  mountDefault?: boolean;
-  onComponentClose?: () => void;
-  onComponentShow?: () => void;
-};
-```
-
-## Performance Tips
-
-1. **Memoize Modal Content**: Use `React.memo()` for modal content that doesn't change frequently
-2. **Optimize Renders**: Keep modal state separate from parent component state when possible
-3. **Lazy Loading**: Consider lazy loading modal content if it's complex
-4. **Animation Timing**: Use appropriate `unMountDelayInMilliSeconds` values (250-500ms is typically sufficient)
-
-```tsx
-// Example of optimized modal content
-const ModalContent = React.memo(({ items }) => (
-  <View>
-    {items.map((item) => (
-      <Text key={item.id}>{item.name}</Text>
-    ))}
-  </View>
-));
-
-// Usage
-<SpotModal {...modalProps}>
-  <ModalContent items={data} />
+<SpotModal
+  showModal={menu.show}
+  setShowModal={(show) => setMenu((prev) => ({ ...prev, show }))}
+  pageX={menu.x}
+  pageY={menu.y}
+>
+  {content}
 </SpotModal>;
 ```
 
-## Troubleshooting
+### A modal that only closes from inside
 
-### Modal Not Appearing
-
-1. **Check Reanimated Setup**: Ensure `react-native-reanimated` is properly installed with babel plugin
-2. **Verify Coordinates**: Make sure `pageX` and `pageY` are valid numbers from the touch event
-3. **Portal System**: Try setting `disablePortal={true}` to test if it's a portal-related issue
-
-### Position Issues
-
-1. **Touch Event Coordinates**: When using touch events, use `event.nativeEvent.pageX/pageY` (not `locationX/locationY`)
-2. **Coordinate Source**: You must provide valid screen coordinates - the package doesn't extract these automatically
-3. **Screen Coordinates**: Ensure you're using absolute screen coordinates, not relative ones
-4. **Orientation**: The component handles rotation, but initial coordinates must be correct for current orientation
-
-### Animation Issues
-
-1. **Babel Plugin**: Add reanimated babel plugin to `babel.config.js`:
-
-```javascript
-module.exports = {
-  plugins: ['react-native-reanimated/plugin'],
-};
+```tsx
+<SpotModal {...menu.modalProps} disableBackdropPress disableAndroidBackButton>
+  <ConfirmContent onDone={menu.close} />
+</SpotModal>
 ```
 
-2. **Clear Cache**: Try `npx react-native start --reset-cache`
+### Opening from a Gesture Handler gesture
 
-## Related Packages
+```tsx
+const longPress = Gesture.LongPress()
+  .runOnJS(true)
+  .onStart((e) => {
+    setPos({ x: e.absoluteX, y: e.absoluteY });
+    setShow(true);
+  });
+```
 
-This package is part of the `@shaquillehinds` React Native ecosystem:
+`.runOnJS(true)` is required. With Reanimated installed the callback is a
+worklet, and calling React setters from it crashes.
 
-- [`@shaquillehinds/react-native-essentials`](https://www.npmjs.com/package/@shaquillehinds/react-native-essentials) - Core utilities and components
+### Reading current state in `onComponentClose`
 
-## Contributing
+```tsx
+<SpotModal
+  {...menu.modalProps}
+  onComponentClose={() => analytics.track('menu_closed', { selectedId })}
+/>
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+The callback is read when it fires, so `selectedId` is current.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## Troubleshooting
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+| Symptom                                                               | Cause                                                                                                                |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Modal fades in at the previous position, then jumps                   | `showModal` was set to `true` before the coordinates. Set both in the same handler or inside the `measure` callback. |
+| Modal is offset from the finger                                       | `locationX/locationY` or RNGH `x/y` used in place of page or absolute coordinates.                                   |
+| `useRoute` throws, or a context is `undefined`, inside the modal      | Portal path. Children render under the provider. Pass props or use `disablePortal`.                                  |
+| `navigation.navigate` inside the modal targets the wrong navigator    | Same. `useNavigation` resolved to the root navigator.                                                                |
+| App ignores taps briefly after the modal closes                       | Backdrop stays mounted for the unmount delay. Lower it.                                                              |
+| Close animation is too fast or too slow                               | `unMountDelayInMilliSeconds` is the fade-out length.                                                                 |
+| Tapping a menu item does nothing to the modal                         | Touches inside the content never reach the backdrop. Call `setShowModal(false)` in the item's handler.               |
+| Content state resets every time the modal opens                       | Children unmount on close. Keep lasting state outside them.                                                          |
+| Dropdown covers its own button                                        | Bottom-half placement extends up from the point. Use the anchored recipe.                                            |
+| Content runs off the side of the screen                               | No width cap. Set `maxWidth`.                                                                                        |
+| Nothing appears                                                       | Content measured zero width or height, or Reanimated is not set up.                                                  |
+| Modal invisible when opened from inside an RN `Modal` or modal screen | Portal overlay is in the window below. Use `disablePortal`.                                                          |
+| `disableNativeModal` seems to do nothing                              | It only applies on the non-portal path.                                                                              |
+| Screen with a `SpotModal` re-renders the whole overlay constantly     | Host component renders often. Every host render updates the portal. Hoist the modal and keep one per screen.         |
+| Crash when opening from an RNGH gesture                               | Missing `.runOnJS(true)`.                                                                                            |
+| Android back closes the modal when it should not                      | Set `disableAndroidBackButton`.                                                                                      |
+| Modal lands under the Android navigation bar near the bottom edge     | `Dimensions.get('screen')` includes system bars. Derived from source. See Known issues.                              |
+| Callbacks see stale state, or a fast reopen closes the modal          | essentials is older than 1.15.0. Upgrade it.                                                                         |
+| Type error: `mountDefault` does not exist                             | Removed in 0.1.0. Start with `showModal` set to `true` if you need it open on first render.                          |
+
+## Known issues
+
+1. **Every host render updates the portal.** `SpotModal` builds a new element on
+   each render and `usePortalComponent` forwards it with `portal.update`, which
+   is a `setState` on the root provider. It is cheap for one modal on a calm
+   screen and wasteful for many instances or fast-rendering hosts. Memoising the
+   element helps little because `children` usually changes identity each render.
+   Keep one hoisted instance per screen.
+2. **Screen size includes Android system bars.** `useDeviceOrientation` in
+   essentials reads `Dimensions.get('screen')`, while touch coordinates are
+   window-relative. On devices with a visible navigation bar, the bottom clamp
+   and the top/bottom half decision can be off by the height of the bars.
+   Derived from source and not confirmed on a device.
+3. **Placement direction cannot be overridden.** A trigger that straddles the
+   screen's midline is partly covered whichever edge you anchor to.
+4. **No pass-through mode.** The backdrop always blocks touches while mounted.
+
+## Upgrading from 0.0.x
+
+Requires `@shaquillehinds/react-native-essentials` `>=1.15.0`.
+
+| Change                                                                           | What to do                                                                                            |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `pageX` / `pageY` are followed while open                                        | Remove `key` bumps and close-wait-reopen sequences that existed to reposition.                        |
+| Reopening during the unmount delay keeps the modal open                          | Remove timeouts that waited out the delay.                                                            |
+| Callbacks and delays are no longer frozen at first mount                         | Remove ref indirection around `onComponentShow` / `onComponentClose`.                                 |
+| Backdrop colour fades with the content                                           | Nothing. Visual change only.                                                                          |
+| Fade-out lasts `unMountDelayInMilliSeconds`, and `0` is honoured                 | Values above 300 that were used to "lengthen the fade" now do so. Lower them if the close feels slow. |
+| Right-half placement is flush with the point                                     | Remove manual `pageX` offsets that compensated for the old gap.                                       |
+| Android back closes the modal                                                    | Remove your own `BackHandler` listeners. Use `disableAndroidBackButton` to opt out.                   |
+| New `disableBackdropPress`                                                       | Replace workarounds that re-set `showModal` to `true`.                                                |
+| `setShowModal` is typed `(show: boolean) => void`                                | Custom setters no longer need to handle the function form.                                            |
+| `mountDefault` removed from the props type                                       | Initialise `showModal` to `true` instead.                                                             |
+| Reanimated and Gesture Handler are declared peers, essentials is a required peer | Install them if your package manager now warns.                                                       |
+
+## AI agent rules
+
+The package ships a rules file written for AI coding agents (Claude Code, Cursor,
+Codex, Copilot, etc.) at `rules/AGENT_RULES.md`. It tells an agent to keep
+screen-scoped hooks out of the modal's children because the portal renders them
+outside the calling tree, to pass root-view coordinates and set them in the same
+handler that opens the modal, to hoist one modal per screen and never put one in
+a list row, and to leave the backdrop, dismissal and Android back to the package.
+It lists every prop and export
+so an agent cannot invent APIs or fall back to patterns from a different popover
+library. Point your agent at it with any of the following.
+
+**Copy it into your project (recommended)**
+
+```sh
+npx rnsm-rules            # writes ./AGENTS.md
+npx rnsm-rules cursor     # writes ./.cursor/rules/react-native-spot-modal.mdc (alwaysApply)
+npx rnsm-rules claude     # writes ./.claude/rules/react-native-spot-modal.md
+npx rnsm-rules codex      # writes ./.codex/rules/react-native-spot-modal.md
+npx rnsm-rules copilot    # writes ./.github/instructions/react-native-spot-modal.instructions.md
+npx rnsm-rules windsurf   # writes ./.windsurf/rules/react-native-spot-modal.md
+npx rnsm-rules docs/ai/spot-modal.md   # custom path
+```
+
+Add `--force` to overwrite an existing file. `--print` writes the rules to stdout
+instead of to disk. Re-run after upgrading the package to pick up rule changes.
+
+**Reference it without copying (Claude Code)**
+
+`CLAUDE.md` supports `@path` imports, so a single line keeps the rules in sync with
+the installed version:
+
+```md
+# CLAUDE.md
+
+@node_modules/@shaquillehinds/react-native-spot-modal/rules/AGENT_RULES.md
+```
+
+**Reference it from a generic `AGENTS.md`**
+
+```md
+Before writing any spot modal, read and follow
+node_modules/@shaquillehinds/react-native-spot-modal/rules/AGENT_RULES.md.
+```
+
+---
 
 ## License
 
 MIT © [Shaquille Hinds](https://github.com/shaquillehinds)
-
-## Support
-
-- 🐛 [Report Bug](https://github.com/shaquillehinds/react-native-spot-modal/issues)
-- 💡 [Request Feature](https://github.com/shaquillehinds/react-native-spot-modal/issues)
-- 📧 Email: shaqdulove@gmail.com
-
----
-
-Made with ❤️ by [Shaquille Hinds](https://github.com/shaquillehinds)

@@ -2,14 +2,21 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "spot-modal": ["./src/index"]
+      "spot-modal": [
+        "./src/index"
+      ],
+      "@shaquillehinds/react-native-spot-modal": [
+        "./src/index"
+      ]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
-    "lib": ["ESNext"],
+    "lib": [
+      "ESNext"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
@@ -27,5 +34,7 @@
     "target": "ESNext",
     "verbatimModuleSyntax": true
   },
-  "exclude": [".src/package.json"]
+  "exclude": [
+    ".src/package.json"
+  ]
 }

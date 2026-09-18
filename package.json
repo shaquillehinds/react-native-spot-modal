@@ -1,6 +1,6 @@
 {
   "name": "@shaquillehinds/react-native-spot-modal",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "A simple location/spot modal for react native that just works.",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
@@ -20,9 +20,14 @@
       }
     }
   },
+  "bin": {
+    "rnsm-rules": "bin/install-rules.js"
+  },
   "files": [
     "lib",
     "src",
+    "rules",
+    "bin",
     "android",
     "ios",
     "cpp",
@@ -77,12 +82,11 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "dependencies": {},
   "devDependencies": {
     "@commitlint/config-conventional": "^19.6.0",
     "@react-native/eslint-config": "^0.73.1",
     "@release-it/conventional-changelog": "^9.0.2",
-    "@shaquillehinds/react-native-essentials": "^1.8.1",
+    "@shaquillehinds/react-native-essentials": "^1.15.0",
     "@types/jest": "^29.5.5",
     "@types/react": "^18.2.44",
     "chokidar-cli": "^3.0.0",
@@ -108,12 +112,9 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
-    "@shaquillehinds/react-native-essentials": ">=1.8.0"
-  },
-  "peerDependenciesMeta": {
-    "@shaquillehinds/react-native-essentials": {
-      "required": false
-    }
+    "@shaquillehinds/react-native-essentials": ">=1.15.0",
+    "react-native-reanimated": ">=3.0.0",
+    "react-native-gesture-handler": ">=2.7.0"
   },
   "workspaces": [
     "example"
@@ -166,7 +167,8 @@
   },
   "eslintIgnore": [
     "node_modules/",
-    "lib/"
+    "lib/",
+    "bin/"
   ],
   "prettier": {
     "quoteProps": "consistent",

@@ -10,61 +10,66 @@ import {
 import { SpotModalController } from './SpotModal.controller';
 import type { SpotModalProps, _SpotModalProps } from './SpotModal.types';
 
+const DEFAULT_UNMOUNT_DELAY = 250;
+
 export function SpotModal({
   unMountDelayInMilliSeconds,
   onComponentClose,
   onComponentShow,
-  mountDefault,
   mountDelayInMilliSeconds,
   ...props
 }: SpotModalProps) {
+  const unMountDelay = unMountDelayInMilliSeconds ?? DEFAULT_UNMOUNT_DELAY;
+
+  const mounter = (modal: React.JSX.Element) => (
+    <ComponentMounter
+      keepMountedOnReopen
+      showComponent={props.showModal}
+      setShowComponent={props.setShowModal}
+      unMountDelayInMilliSeconds={unMountDelay}
+      onComponentClose={onComponentClose}
+      onComponentShow={onComponentShow}
+      mountDelayInMilliSeconds={mountDelayInMilliSeconds}
+      component={modal}
+    />
+  );
+
   const portal = usePortalComponent({
-    Component: (
-      <ComponentMounter
-        showComponent={props.showModal}
-        setShowComponent={props.setShowModal}
-        unMountDelayInMilliSeconds={unMountDelayInMilliSeconds || 250}
-        onComponentClose={onComponentClose}
-        onComponentShow={onComponentShow}
-        mountDefault={mountDefault}
-        mountDelayInMilliSeconds={mountDelayInMilliSeconds}
-        component={<Modal {...props} disableNativeModal />}
-      />
+    // The portal overlay is already above the app, so this path never uses a
+    // native Modal regardless of the disableNativeModal prop.
+    Component: mounter(
+      <Modal {...props} disableNativeModal fadeOutDuration={unMountDelay} />
     ),
     name: 'spot-modal',
     disable: props.disablePortal,
   });
-  if (portal && !props.disablePortal) {
-    return <></>;
-  } else {
-    return (
-      <ComponentMounter
-        showComponent={props.showModal}
-        setShowComponent={props.setShowModal}
-        unMountDelayInMilliSeconds={unMountDelayInMilliSeconds || 250}
-        onComponentClose={onComponentClose}
-        onComponentShow={onComponentShow}
-        mountDefault={mountDefault}
-        mountDelayInMilliSeconds={mountDelayInMilliSeconds}
-        component={<Modal {...props} />}
-      />
-    );
-  }
+
+  if (portal && !props.disablePortal) return <></>;
+  return mounter(<Modal {...props} fadeOutDuration={unMountDelay} />);
 }
 
-function Modal(props: _SpotModalProps) {
+function Modal(props: _SpotModalProps & { fadeOutDuration: number }) {
   const controller = SpotModalController(props);
   return (
-    <ModalWrapper useNativeModal={!props.disableNativeModal}>
+    <ModalWrapper
+      useNativeModal={!props.disableNativeModal}
+      disableAndroidBackButton={props.disableAndroidBackButton}
+      onRequestClose={controller.closeModal}
+    >
       <Press
         stopPropagation
         disableAnimation
-        style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: props.backgroundColor },
-        ]}
+        style={StyleSheet.absoluteFill}
         onPress={controller.onModalBackdropPress}
       >
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: props.backgroundColor },
+            controller.backdropAnimatedStyles,
+          ]}
+        />
         <ModalForegroundWrapper>
           <Animated.View
             onLayout={controller.onContentLayout}
